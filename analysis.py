@@ -6,13 +6,17 @@ import string
 import spacy
 from collections import Counter
 from transformers import pipeline
+from spacy import displacy
+import gensim
+from gensim.corpora import Dictionary
+from gensim.models import LdaModel
 
 
 
 #using two dataframes, provinces and comments, create a relationship between the two and a reddit like interface to display the data with body and comments in a tree like structure    
 
 #pre processing
-classifier = pipeline("text-classification",model='bhadresh-savani/distilbert-base-uncased-emotion', return_all_scores=True)
+classifier = pipeline("sentiment-analysis", model="michellejieli/emotion_text_classifier", top_k=None, device=0)
 # provinces_df = pd.read_csv('provinces.csv')
 # comments_df = pd.read_csv('comments.csv')
 
@@ -62,30 +66,44 @@ def preprocessing(df):
 
     return df
 
-sentiment_analysis = {
+
+
+def sentiment_analysis(selected_db):
+
+    sentiment_df = {
     "comment_id": [],
     "sentiment": [],
     "score": []
-}
-
-def sentiment_analysis(comments_df):
+        }
+    
     with st.spinner('Preprocessing...'):
+        comments = pd.read_csv(f"db/{selected_db.split('.')[0]}_comments.csv")
+
+        #check if sentiment analysis has already been done
+        if 'sentiment' in comments.columns:
+            print('sentiment already done')
+            return comments
+       
+        print(comments)
+
         #replace comments_body with preprocessed comments
-        comments_df['comment_body'] = preprocessing(comments_df['comment_body'])
+        #comments['PrePro_comments'] = preprocessing(comments['comment_body'])
+
 
             #sentiment analysis
-        for index, comment in comments_df.iterrows():
+        for index, comment in comments.iterrows():
             if len(comment['comment_body']) <= 260:
                 sentiment = classifier(comment['comment_body'])
-                sentiment_analysis['comment_id'].append(comment['comment_id'])
+                sentiment_df['comment_id'].append(comment['comment_id'])
                 highest_score = max(sentiment[0], key=lambda x:x['score'])
                 highest_label = highest_score['label']
                 hgihtest_score = highest_score['score']
-                sentiment_analysis['sentiment'].append(highest_label)
-                sentiment_analysis['score'].append(hgihtest_score)
+                sentiment_df['sentiment'].append(highest_label)
+                sentiment_df['score'].append(hgihtest_score)
 
-        sentiment_df = pd.DataFrame(sentiment_analysis)
-        comments_df = comments_df.merge(sentiment_df, on='comment_id')
+        sentiment_df = pd.DataFrame(sentiment_df)
+        comments_df = comments.merge(sentiment_df, on='comment_id')
+        comments_df.to_csv(f"db/{selected_db.split('.')[0]}_comments.csv", index=False)
     
     return comments_df
 

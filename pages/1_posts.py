@@ -1,6 +1,9 @@
 import pandas as pd
 import streamlit as st
 import os
+import sys
+
+sys.path.append('../')
 from analysis import sentiment_analysis
 
 st.set_page_config(page_title="posts")
@@ -30,10 +33,13 @@ def view_db(db_file):
 
     post_info = filtered_posts[filtered_posts['title'] == post]
     
+    #body
     st.subheader(post_info['title'].values[0])
     st.write(post_info['body'].values[0])
-    st.markdown(f"#### Score: {post_info['score'].values[0]} | Author: {post_info['author'].values[0]} | Created: {post_info['created'].values[0]}")
-    
+    st.markdown(f"#### Score: {post_info['score'].values[0]} | Author: {post_info['author'].values[0]} | comments: {post_info['comms_num'].values[0]}")
+    st.info("Topics: ")
+
+    #comments
     st.markdown('## Comments')
     st.markdown('---')
 
@@ -41,7 +47,7 @@ def view_db(db_file):
 
     for index, comment in filtered_comments.iterrows():
         try:
-            st.markdown(f"##### u/{comment['name']} | {comment['sentiment']} | {comment['score']}")
+            st.markdown(f"##### u/{comment['name']} | {comment['sentiment']} | {format(comment['score'], '.2%')}")
             st.markdown(f"{comment['comment_body']}")
             st.markdown("---")
         except:
@@ -51,16 +57,17 @@ def view_db(db_file):
 
 def main():
     #read all csv files in db folder
-    db_files = os.listdir("db")
-    db_files = [file for file in db_files if file.endswith(".csv")]
+    with st.spinner('Loading db...'):
+        db_files = os.listdir("db")
+        db_files = [file for file in db_files if file.endswith(".csv")]
 
-    queries = [file for file in db_files if "comment" not in file]
+        queries = [file for file in db_files if "comment" not in file]
 
-    selected_db = st.sidebar.selectbox("Select a database", queries)
-    comments = [file for file in db_files if "comment" in file]
-    
-    if selected_db:
-        view_db(selected_db)
+        selected_db = st.sidebar.selectbox("Select a database", queries, key="db")
+        comments = [file for file in db_files if "comment" in file]
+        
+        if selected_db:
+            view_db(selected_db)
 
     #column with 2 buttons
     col1, col2 = st.sidebar.columns(2)
@@ -69,14 +76,13 @@ def main():
     if col1.button("Refresh"):
         main()
 
-    # if col2.button("Analyse"):
-    #     with st.spinner('Analysing...'):
-    #         comments = pd.read_csv(f"db/{selected_db.split('.')[0]}_comments.csv")
-    #         sentiment_analysis(comments)
-    #         if st.button("cancel"):
-    #             st.stop()
-    #     st.success("Done")
-    #     main()
+    if col2.button("Analyse"):
+        with st.spinner('Analysing...'):
+            sentiment_analysis(selected_db)
+            if st.button("cancel"):
+                st.stop()
+        st.success("Done")
+        main()
 
         
         

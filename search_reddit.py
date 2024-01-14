@@ -50,7 +50,7 @@ def search(queries, subreddits):
         "comment_id": [],
         "comment_parent_id": [],
         "comment_body": [],
-        "comment_link_id": []
+        "permalink": []
     }
     try:
         for submissions in reddit.subreddit("+".join(subreddits)).search("+".join(queries), limit=10, sort="top", time_filter="all"):
@@ -65,14 +65,16 @@ def search(queries, subreddits):
             posts["permalink"].append(submissions.permalink)
             posts["author"].append(submissions.author)
 
-            submissions.comments.replace_more(limit=None)
-            for comment in submissions.comments.list():
-                comments["name"].append(comment.name)
+            #get only parent comments
+            submissions.comments.replace_more(limit=0)
+            for comment in submissions.comments:
+                comments["name"].append(comment.author)
                 comments["submission_id"].append(comment.submission.id)
                 comments["comment_id"].append(comment.id)
                 comments["comment_parent_id"].append(comment.parent_id)
                 comments["comment_body"].append(comment.body)
-                comments["comment_link_id"].append(comment.link_id)
+                comments["permalink"].append(comment.permalink)
+
     except Exception as e:
         st.error(e)
         st.stop()
