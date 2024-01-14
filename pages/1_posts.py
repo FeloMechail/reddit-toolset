@@ -4,7 +4,7 @@ import os
 import sys
 
 sys.path.append('../')
-from analysis import sentiment_analysis
+from analysis import sentiment_analysis, topic_modelling
 
 st.set_page_config(page_title="posts")
 
@@ -18,7 +18,9 @@ def view_db(db_file):
     
     unique_subreddits = df['subreddit'].unique()
 
-    options = [f"{title}\t{length} " for title, length in zip(unique_subreddits, df['subreddit'].value_counts())]
+    len_subreddits = [len(df[df['subreddit'] == subreddit]) for subreddit in unique_subreddits]
+
+    options = [f"{title}\t{length} " for title, length in zip(unique_subreddits, len_subreddits)]
 
     subreddit = st.sidebar.selectbox("Select Subreddit", options)
 
@@ -37,7 +39,11 @@ def view_db(db_file):
     st.subheader(post_info['title'].values[0])
     st.write(post_info['body'].values[0])
     st.markdown(f"#### Score: {post_info['score'].values[0]} | Author: {post_info['author'].values[0]} | comments: {post_info['comms_num'].values[0]}")
-    st.info("Topics: ")
+
+    try:
+        st.info(f"Topics: {post_info['topic'].values[0]}")
+    except:
+        st.info("Topics: Not analysed")
 
     #comments
     st.markdown('## Comments')
@@ -63,7 +69,7 @@ def main():
 
         queries = [file for file in db_files if "comment" not in file]
 
-        selected_db = st.sidebar.selectbox("Select a database", queries, key="db")
+        selected_db = st.sidebar.selectbox("Select a database", queries)
         comments = [file for file in db_files if "comment" in file]
         
         if selected_db:
@@ -79,6 +85,7 @@ def main():
     if col2.button("Analyse"):
         with st.spinner('Analysing...'):
             sentiment_analysis(selected_db)
+            topic_modelling(selected_db)
             if st.button("cancel"):
                 st.stop()
         st.success("Done")

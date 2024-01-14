@@ -51,7 +51,6 @@ def topic_modelling(body):
         texts.append(article)
         article = []
 
-    print(texts)
     
     #bigrams to help with "new york" 
     bigram = gensim.models.Phrases(texts, min_count=5, threshold=100)
@@ -65,10 +64,12 @@ def topic_modelling(body):
     article = [dictionary.doc2bow(text) for text in texts]
     
     #lda model
-    lda = LdaModel(corpus=article, id2word=dictionary, num_topics=5, passes=10)
+    lda = LdaModel(corpus=article, id2word=dictionary, num_topics=1, passes=10)
     
     #get top 3 topics
     topics = lda.print_topics(num_words=3)
+
+
     print(topics)
     
 
@@ -139,4 +140,5 @@ def sentiment_analysis(comments):
     #save to csv
     comments_sent.to_csv('comments_sent.csv', index=False)
 
-sentiment_analysis(comments)
+
+topic_modelling(body)

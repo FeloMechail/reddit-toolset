@@ -17,7 +17,7 @@ def reddit_instance():
 
     return reddit   
 
-def search(queries, subreddits):
+def search(queries, subreddits, num):
 
     posts_df, comments_df = None, None
 
@@ -53,7 +53,7 @@ def search(queries, subreddits):
         "permalink": []
     }
     try:
-        for submissions in reddit.subreddit("+".join(subreddits)).search("+".join(queries), limit=10, sort="top", time_filter="all"):
+        for submissions in reddit.subreddit("+".join(subreddits)).search("+".join(queries), limit=num, sort="top", time_filter="all"):
             posts["title"].append(submissions.title)
             posts["score"].append(submissions.score)
             posts["id"].append(submissions.id)

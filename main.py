@@ -27,6 +27,8 @@ def main_page():
     st.write("Your subreddits are: ")
     st.write(subreddit)
 
+    num = st.number_input("Enter number of posts to search", min_value=1, max_value=100, value=50)
+
     #button to start the search
     if st.button("Search"):
 
@@ -41,7 +43,7 @@ def main_page():
             with st.spinner('Searching...'):
                 global posts_df
                 global comments_df
-                posts_df, comments_df = search(queries, subreddit)
+                posts_df, comments_df = search(queries, subreddit, num)
     
             if posts_df is None:
                 st.error("No results found")

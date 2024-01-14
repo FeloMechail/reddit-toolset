@@ -10,6 +10,8 @@ from spacy import displacy
 import gensim
 from gensim.corpora import Dictionary
 from gensim.models import LdaModel
+from bertopic import BERTopic
+
 
 
 
@@ -17,6 +19,9 @@ from gensim.models import LdaModel
 
 #pre processing
 classifier = pipeline("sentiment-analysis", model="michellejieli/emotion_text_classifier", top_k=None, device=0)
+model = BERTopic(verbose=True, embedding_model="paraphrase-MiniLM-L6-v2", min_topic_size=7)
+nlp = spacy.load('en_core_web_sm')
+
 # provinces_df = pd.read_csv('provinces.csv')
 # comments_df = pd.read_csv('comments.csv')
 
@@ -64,6 +69,9 @@ def preprocessing(df):
     #remove html tags
     df = df.str.replace('<.*?>', '', case=False)
 
+    #remove numbers
+    df = df.str.replace('\d+', '', case=False)
+
     return df
 
 
@@ -108,6 +116,72 @@ def sentiment_analysis(selected_db):
     return comments_df
 
 
+def topic_modelling(selected_db):
+    body = pd.read_csv(f"db/{selected_db}")
+
+    # for post in body:
+    #     print(post)
+
+    topics_df = {
+        "topic": [],
+        "id": [],
+    }
+
+    for index, post in body.iterrows():
+        #remove urls
+        texts, article = [], []
+        
+        bodys = post['body']
+
+        #remove urls
+        #print(post)
+        #to string
+        bodys = str(bodys)
+        
+        bodys = bodys.replace('http\S+|www.\S+', '',)
+        
+        bodys = list(filter(bool, bodys.splitlines()))
+        
+        
+        for paragraph in bodys:
+
+            paragraph = nlp(paragraph)
+            
+
+            for word in paragraph:
+                if not word.is_stop and not word.is_punct and not word.like_num and not word.like_url and word.text != "I" and not word.is_space:
+                    article.append(word.lemma_)
+            
+            texts.append(article)
+            article = []
+
+        
+        #bigrams to help with "new york" 
+        bigram = gensim.models.Phrases(texts, min_count=5, threshold=100)
+        bigram_mod = gensim.models.phrases.Phraser(bigram)
+        texts = [bigram_mod[doc] for doc in texts]
+
+        #print(texts)
+        
+        #dictionary
+        dictionary = Dictionary(texts)
+        article = [dictionary.doc2bow(text) for text in texts]
+        
+        #lda model
+        lda = LdaModel(corpus=article, id2word=dictionary, num_topics=1, passes=10)
+        
+        #get top 3 topics
+        topics = lda.print_topics(num_words=5)
+
+        topics_df['topic'].append(topics)
+        topics_df['id'].append(post['id'])
+
+    topics_df = pd.DataFrame(topics_df)
+    print(topics_df)
+    body = body.merge(topics_df, on='id')
+    body.to_csv(f"db/{selected_db}", index=False)
+
+    return body
 
 
 
