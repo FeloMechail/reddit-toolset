@@ -13,7 +13,7 @@ st.set_page_config(page_title="Query Reddit")
 def main_page():
     st.title("Query Reddit")
     queries = st.text_area("Enter a query")
-    queries = queries.replace(" ", "")
+    #queries = queries.replace(" ", "")
     #create a list and remove empty strings
     queries = queries.split("\n")
     queries = list(filter(None, queries))
@@ -27,7 +27,7 @@ def main_page():
     st.write("Your subreddits are: ")
     st.write(subreddit)
 
-    num = st.number_input("Enter number of posts to search", min_value=1, max_value=100, value=50)
+    num = st.number_input("Enter number of posts to search", min_value=1, max_value=500, value=50)
 
     #button to start the search
     if st.button("Search"):
@@ -43,7 +43,8 @@ def main_page():
             with st.spinner('Searching...'):
                 global posts_df
                 global comments_df
-                posts_df, comments_df = search(queries, subreddit, num)
+                print(queries, subreddit, num)
+                posts_df, comments_df = search(subreddit,queries, num)
     
             if posts_df is None:
                 st.error("No results found")

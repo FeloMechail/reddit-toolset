@@ -24,10 +24,10 @@ def search(queries, subreddits, num):
     print("Searching...")
 
     #if csv files already exist, return them
-    if os.path.isfile(f"{'+'.join(subreddits)}.csv") and os.path.isfile(f"{'+'.join(subreddits)}_comments.csv"):
-        posts_df = pd.read_csv(f"{'+'.join(subreddits)}.csv")
-        comments_df = pd.read_csv(f"{'+'.join(subreddits)}_comments.csv")
-        return posts_df, comments_df
+    # if os.path.isfile(f"{'+'.join(subreddits)}.csv") and os.path.isfile(f"{'+'.join(subreddits)}_comments.csv"):
+    #     posts_df = pd.read_csv(f"{'+'.join(subreddits)}.csv")
+    #     comments_df = pd.read_csv(f"{'+'.join(subreddits)}_comments.csv")
+    #     return posts_df, comments_df
 
     reddit = reddit_instance()
 
@@ -52,8 +52,9 @@ def search(queries, subreddits, num):
         "comment_body": [],
         "permalink": []
     }
+
     try:
-        for submissions in reddit.subreddit("+".join(subreddits)).search("+".join(queries), limit=num, sort="top", time_filter="all"):
+        for submissions in reddit.subreddit("+".join(subreddits)).search("heat pumps", limit=num, time_filter="all"):
             posts["title"].append(submissions.title)
             posts["score"].append(submissions.score)
             posts["id"].append(submissions.id)
@@ -80,10 +81,13 @@ def search(queries, subreddits, num):
         st.stop()
 
     if len(posts["title"]) != 0:
+        st.markdown("saving posts")
         posts_df = pd.DataFrame(posts)
         comments_df = pd.DataFrame(comments)
 
         posts_df.to_csv(f"db\{'+'.join(subreddits)}.csv", index=False)
         comments_df.to_csv(f"db\{'+'.join(subreddits)}_comments.csv", index=False)
+
+        print(f"saved to db/{'+'.join(subreddits)}.csv")
 
     return posts_df, comments_df
