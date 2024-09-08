@@ -4,7 +4,7 @@ import os
 import sys
 
 sys.path.append('../')
-from analysis import sentiment_analysis, topic_modelling
+from analysis import *
 
 st.set_page_config(page_title="posts")
 
@@ -85,7 +85,9 @@ def main():
     if col2.button("Analyse"):
         with st.spinner('Analysing...'):
             sentiment_analysis(selected_db)
+            #topic_modelling(selected_db)
             topic_modelling(selected_db)
+            topics = top_topics_count(selected_db)
             if st.button("cancel"):
                 st.stop()
         st.success("Done")
